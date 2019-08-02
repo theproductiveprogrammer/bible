@@ -10,24 +10,82 @@ function main() {
 }
 
 function serve(books) {
-    consoleShow(serve_random_chapter_1(books))
+    let chap
 
+    if(process.argv.length < 3) {
+        chap = serve_random_chapter_1(books)
+    } else {
+        let num = process.argv[2]
+        chap = loadChapter(books, num)
+        if(!chap) {
+            return console.error(`Did not understand: ${num}`)
+        }
+    }
+    consoleShow(chap)
+    recordShown(chap)
 
     function serve_random_chapter_1(books) {
         let bk = books[Math.floor(Math.random()*books.length)]
-        return {
-            testament: bk.testament,
-            title: bk.title,
-            txt: bk.chapters[Math.floor(Math.random()*bk.chapters.length)],
+        return serveChapter(bk, bk.chapters[Math.floor(Math.random()*bk.chapters.length)])
+    }
+}
+
+function serveChapter(book, chapter) {
+    return {
+        testament: book.testament,
+        title: book.title,
+        num: book.num,
+        chapter: chapter
+    }
+}
+
+function loadChapter(books, num) {
+    let m = num.match(/([on])([0-9]+)[^0-9]([0-9]+)/)
+    if(!m) return
+    let t = m[1]
+    let bknum = m[2]
+    let chapnum = m[3]
+
+    let testament = 'new'
+    if(t == 'o') testament = 'old'
+
+    for(let i = 0;i < books.length;i++) {
+        let book = books[i]
+        if(book.testament == testament && book.num == bknum) {
+            for(let i = 0;i < book.chapters.length;i++) {
+                let chapter = book.chapters[i]
+                if(chapter.txt[0].startsWith(`${chapnum}:`)) {
+                    return serveChapter(book, chapter)
+                }
+            }
         }
     }
 }
 
+function chapterId(book) {
+    let testament = 'o'
+    if(book.testament == 'new') testament = 'n'
+    return `${testament}${book.num}|${book.chapter.num}`
+}
+
+const shown = path.join(__dirname, ".verses-shown")
+function recordShown(book) {
+    if(book.chapter.num == 'xxx') return
+    let id = chapterId(book)
+    fs.appendFile(shown, `${id}\n`, (err) => {
+        if(err) console.error(err)
+        else console.log(id)
+    })
+}
+
 function consoleShow(book) {
-    console.log(`(from a book of ${book.testament.toLowerCase()} -`)
+    let testament = 'the old testament'
+    if(book.testament == 'new') testament = 'the new testament'
+    console.log(`(from a book of ${testament} -`)
+
     console.log(`\t${book.title})`)
     console.log('===')
-    console.log(book.txt.join('\n'))
+    console.log(book.chapter.txt.join('\n'))
 }
 
 /*      problem/
@@ -64,11 +122,11 @@ function load(name, cb) {
             let ot = split_into_books_1(testaments.oldtestament)
             let nt = split_into_books_1(testaments.newtestament)
             ot = ot.map(b => {
-                b.testament = 'The Old Testament'
+                b.testament = 'old'
                 return b
             })
             nt = nt.map(b => {
-                b.testament = 'The New Testament'
+                b.testament = 'new'
                 return b
             })
             let books = ot.concat(nt)
@@ -93,8 +151,14 @@ function load(name, cb) {
         }
         let chapters = []
         for(let i = 0;i < ndxs.length;i++) {
-            let chapter = book.txt.slice(ndxs[i], ndxs[i+1])
-            chapters.push(chapter)
+            let txt = book.txt.slice(ndxs[i], ndxs[i+1])
+            let m = txt[0].match(/^([0-9]+):/)
+            let num = 'xxx'
+            if(m) num = m[1]
+            chapters.push({
+                num: num,
+                txt: txt
+            })
         }
         book.chapters = chapters
     }
@@ -113,6 +177,7 @@ function load(name, cb) {
         for(let i = 0;i < ndxs.length;i++) {
             let ndx = ndxs[i]
             books.push({
+                num: books.length+1,
                 title: blocks[ndx],
                 txt: blocks.slice(ndx+1, ndxs[i+1]),
             })
