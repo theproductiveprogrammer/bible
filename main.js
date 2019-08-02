@@ -1,8 +1,9 @@
 'use strict'
 const fs = require('fs')
+const path = require('path')
 
 function main() {
-    load('kjv.txt', (err, books) => {
+    load(path.join(__dirname,'kjv.txt'), (err, books) => {
         if(err) console.error(err)
         else serve(books)
     })
