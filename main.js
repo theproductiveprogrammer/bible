@@ -2,41 +2,16 @@
 const fs = require('fs')
 const path = require('path')
 
-function main() {
+function serve(fn) {
     load(path.join(__dirname,'kjv.txt'), (err, books) => {
         if(err) console.error(err)
-        else serve(books)
+        else fn(books)
     })
 }
 
-function serve(books) {
-    let chap
-
-    if(process.argv.length < 3) {
-        chap = serve_random_chapter_1(books)
-    } else {
-        let num = process.argv[2]
-        chap = loadChapter(books, num)
-        if(!chap) {
-            return console.error(`Did not understand: ${num}`)
-        }
-    }
-    consoleShow(chap)
-    recordShown(chap)
-
-    function serve_random_chapter_1(books) {
-        let bk = books[Math.floor(Math.random()*books.length)]
-        return serveChapter(bk, bk.chapters[Math.floor(Math.random()*bk.chapters.length)])
-    }
-}
-
-function serveChapter(book, chapter) {
-    return {
-        testament: book.testament,
-        title: book.title,
-        num: book.num,
-        chapter: chapter
-    }
+function randomChapter(books) {
+    let bk = books[Math.floor(Math.random()*books.length)]
+    return serveChapter(bk, bk.chapters[Math.floor(Math.random()*bk.chapters.length)])
 }
 
 function loadChapter(books, num) {
@@ -62,30 +37,45 @@ function loadChapter(books, num) {
     }
 }
 
+function findResults(books, search) {
+    search = search.toLowerCase()
+    let results = []
+    for(let i = 0;i < books.length;i++) {
+        let book = books[i]
+        for(let i = 0;i < book.chapters.length;i++) {
+            let chapter = book.chapters[i]
+            let txt = chapter.txt.join(' ').toLowerCase()
+            if(txt.search(search) != -1) {
+                let bk = serveChapter(book, chapter)
+                bk.result = xtract_result_1(chapter.txt, search)
+                results.push(bk)
+            }
+        }
+    }
+    return results
+
+    function xtract_result_1(txt, search) {
+        for(let i = 0;i < txt.length;i++) {
+            let xtr = txt.slice(i, i+2)
+            let s = xtr.join(' ').toLowerCase()
+            if(s.search(search) != -1) return xtr
+        }
+    }
+}
+
 function chapterId(book) {
     let testament = 'o'
     if(book.testament == 'new') testament = 'n'
     return `${testament}${book.num}|${book.chapter.num}`
 }
 
-const shown = path.join(__dirname, ".verses-shown")
-function recordShown(book) {
-    if(book.chapter.num == 'xxx') return
-    let id = chapterId(book)
-    fs.appendFile(shown, `${id}\n`, (err) => {
-        if(err) console.error(err)
-        else console.log(id)
-    })
-}
-
-function consoleShow(book) {
-    let testament = 'the old testament'
-    if(book.testament == 'new') testament = 'the new testament'
-    console.log(`(from a book of ${testament} -`)
-
-    console.log(`\t${book.title})`)
-    console.log('===')
-    console.log(book.chapter.txt.join('\n'))
+function serveChapter(book, chapter) {
+    return {
+        testament: book.testament,
+        title: book.title,
+        num: book.num,
+        chapter: chapter
+    }
 }
 
 /*      problem/
@@ -229,4 +219,10 @@ function load(name, cb) {
     }
 }
 
-module.exports = main
+module.exports = {
+    serve: serve,
+    randomChapter: randomChapter,
+    loadChapter: loadChapter,
+    chapterId: chapterId,
+    findResults: findResults,
+}

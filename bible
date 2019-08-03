@@ -1,5 +1,54 @@
 #!/usr/bin/env node
 'use strict'
+const path = require('path')
+const fs = require('fs')
+
 const main = require('./main')
 
-main()
+function cmdline(books) {
+    let chap
+
+    if(process.argv.length < 3) {
+        chap = main.randomChapter(books)
+    } else {
+        let arg = process.argv.slice(2).join(' ')
+        chap = main.loadChapter(books, arg)
+        if(!chap) {
+            return consoleResults(main.findResults(books, arg))
+        }
+    }
+    consoleShow(chap)
+    recordShown(chap)
+
+}
+
+const shown = path.join(__dirname, ".verses-shown")
+function recordShown(book) {
+    if(book.chapter.num == 'xxx') return
+    let id = main.chapterId(book)
+    fs.appendFile(shown, `${id}\n`, (err) => {
+        if(err) console.error(err)
+        else console.log(id)
+    })
+}
+
+function consoleShow(book) {
+    let testament = 'the old testament'
+    if(book.testament == 'new') testament = 'the new testament'
+    console.log(`(from a book of ${testament} -`)
+
+    console.log(`\t${book.title})`)
+    console.log('===')
+    console.log(book.chapter.txt.join('\n'))
+}
+
+function consoleResults(verses) {
+    if(!verses || !verses.length) return console.error(`(no results found)`)
+    for(let i = 0;i < verses.length;i++) {
+        let book = verses[i]
+        console.log(book.result.join('\n'))
+        console.log(main.chapterId(book))
+    }
+}
+
+main.serve(cmdline)
