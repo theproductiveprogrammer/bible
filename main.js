@@ -47,6 +47,7 @@ function findResults(books, search) {
             let txt = chapter.txt.join(' ').toLowerCase()
             if(txt.search(search) != -1) {
                 let bk = serveChapter(book, chapter)
+                bk.chapter = { num: bk.chapter.num }
                 bk.result = xtract_result_1(chapter.txt, search)
                 results.push(bk)
             }
