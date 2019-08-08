@@ -14,19 +14,44 @@ function randomChapter(books) {
     return serveChapter(bk, bk.chapters[Math.floor(Math.random()*bk.chapters.length)])
 }
 
-function loadChapter(books, num) {
-    let m = num.match(/([on])([0-9]+)[^0-9]([0-9]+)/)
-    if(!m) return
-    let t = m[1]
-    let bknum = m[2]
-    let chapnum = m[3]
+function loadChapter(books, chapId) {
+    let m = chapId.match(/^([on])([0-9]+)[: \t,^*#]([0-9]+)/)
+    if(m) return chapter_num_1(m[1], m[2], m[3])
 
-    let testament = 'new'
-    if(t == 'o') testament = 'old'
+    m = chapId.match(/^([A-z]*)[: \t^*#]([0-9]+)/)
+    if(m) return chapter_1(m[1], m[2])
 
-    for(let i = 0;i < books.length;i++) {
-        let book = books[i]
-        if(book.testament == testament && book.num == bknum) {
+
+    function chapter_num_1(testament, bknum, chapnum) {
+        if(testament == 'o') testament = 'old'
+        else testament = 'new'
+        for(let i = 0;i < books.length;i++) {
+            let book = books[i]
+            if(book.testament == testament && book.num == bknum) {
+                for(let i = 0;i < book.chapters.length;i++) {
+                    let chapter = book.chapters[i]
+                    if(chapter.txt[0].startsWith(`${chapnum}:`)) {
+                        return serveChapter(book, chapter)
+                    }
+                }
+            }
+        }
+    }
+
+    function chapter_1(bk, chapnum) {
+        let bks = []
+        bk = bk.split(' ').map(w => w.toLowerCase())
+        for(let i = 0;i < books.length;i++) {
+            let book = books[i]
+            let title = book.title.toLowerCase()
+            let found = true
+            for(let i = 0;i < bk.length;i++) {
+                if(title.search(bk[i]) == -1) found = false
+            }
+            if(found) bks.push(book)
+        }
+        if(bks.length == 1) {
+            let book = bks[0]
             for(let i = 0;i < book.chapters.length;i++) {
                 let chapter = book.chapters[i]
                 if(chapter.txt[0].startsWith(`${chapnum}:`)) {

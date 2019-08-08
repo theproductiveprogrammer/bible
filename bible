@@ -6,29 +6,94 @@ const fs = require('fs')
 const main = require('./main')
 
 function cmdline(books) {
-    let chap
-
     if(process.argv.length < 3) {
-        chap = main.randomChapter(books)
+        show_random_chapter_1(books)
     } else {
-        let arg = process.argv.slice(2).join(' ')
-        chap = main.loadChapter(books, arg)
-        if(!chap) {
-            return consoleResults(main.findResults(books, arg))
+        let args = process.argv.slice(2).join(' ')
+        if(args == '-h' || args == '--help') showHelp()
+        else if (args == '-b' || args == '--books') showBooks(books)
+        else if (args == '-f' || '--fav') saveFav()
+        else {
+            omniSearch(books, args)
         }
     }
-    consoleShow(chap)
-    recordShown(chap)
+
+    function show_random_chapter_1(books) {
+        let chap = main.randomChapter(books)
+        consoleShow(chap)
+        recordShown(chap)
+    }
 
 }
 
-const shown = path.join(__dirname, ".verses-shown")
+function showHelp() {
+    console.log(`bible
+Shows a chapter from the bible by default.
+        -h|--help       : show this help
+        -b|--books      : show list of bible books
+        -f|--fav        : save last shown chapter as favorite
+        chapId          : show this chapter (eg: o19:23, psalms:23)
+        the lord is my  : find matching verses
+`)
+}
+
+function showBooks(books) {
+    console.log('\tThe Old Testament')
+    console.log('\t=================')
+    for(let i = 0;i < books.length;i++) {
+        if(books[i].testament == 'old') {
+            console.log(`${books[i].title.replace(/\n/g,' ')}`)
+        }
+    }
+
+    console.log('')
+
+    console.log('\tThe New Testament')
+    console.log('\t=================')
+    for(let i = 0;i < books.length;i++) {
+        if(books[i].testament == 'new') {
+            console.log(`${books[i].title}`)
+        }
+    }
+}
+
+/*      outcome/
+ * See if the request is matches a chapter and return that.
+ * If not return results as a phrase in the bible.
+ */
+function omniSearch(books, search) {
+    let chap = main.loadChapter(books, search)
+    if(chap) {
+        consoleShow(chap)
+        recordShown(chap)
+    } else {
+        let results = main.findResults(books, search)
+        consoleShowResults(results)
+    }
+}
+
+const shown = path.join(__dirname, ".chapters-shown")
 function recordShown(book) {
     if(book.chapter.num == 'xxx') return
     let id = main.chapterId(book)
     fs.appendFile(shown, `${id}\n`, (err) => {
         if(err) console.error(err)
         else console.log(id)
+    })
+}
+
+const favs = path.join(__dirname, "favs")
+function saveFav() {
+    fs.readFile(shown, 'utf8', (err, data) => {
+        if(err) console.error(err)
+        else {
+            let lines = data.split(/\n/).filter(l => l.trim().length > 0)
+            let last = lines[lines.length-1]
+            fs.appendFile(favs, `${last}\n`, (err) => {
+                if(err) console.error(err)
+                else console.log(`Saving ${last} as favorite`)
+            })
+        }
     })
 }
 
@@ -42,7 +107,7 @@ function consoleShow(book) {
     console.log(book.chapter.txt.join('\n'))
 }
 
-function consoleResults(verses) {
+function consoleShowResults(verses) {
     if(!verses || !verses.length) return console.error(`(no results found)`)
     for(let i = 0;i < verses.length;i++) {
         let book = verses[i]
