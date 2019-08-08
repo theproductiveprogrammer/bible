@@ -15,10 +15,10 @@ function randomChapter(books) {
 }
 
 function loadChapter(books, chapId) {
-    let m = chapId.match(/^([on])([0-9]+)[: \t,^*#]([0-9]+)/)
+    let m = chapId.match(/^([on])([0-9]+)[:| \t,^*#]([0-9]+)/)
     if(m) return chapter_num_1(m[1], m[2], m[3])
 
-    m = chapId.match(/^([A-z]*)[: \t^*#]([0-9]+)/)
+    m = chapId.match(/^([A-z]*)[:| \t^*#]([0-9]+)/)
     if(m) return chapter_1(m[1], m[2])
 
 
