@@ -12,7 +12,8 @@ function cmdline(books) {
         let args = process.argv.slice(2).join(' ')
         if(args == '-h' || args == '--help') showHelp()
         else if (args == '-b' || args == '--books') showBooks(books)
-        else if (args == '-f' || '--fav') saveFav()
+        else if (args == '-f' || args == '--fav') showFavs()
+        else if (args == '--save') saveFav()
         else {
             omniSearch(books, args)
         }
@@ -31,7 +32,8 @@ function showHelp() {
 Shows a chapter from the bible by default.
         -h|--help       : show this help
         -b|--books      : show list of bible books
-        -f|--fav        : save last shown chapter as favorite
+        --save          : save last shown chapter as favorite
+        -f|--fav        : show list of favorite chapters
         chapId          : show this chapter (eg: o19:23, psalms:23)
         the lord is my  : find matching verses
 `)
@@ -96,6 +98,14 @@ function saveFav() {
         }
     })
 }
+
+function showFavs() {
+    fs.readFile(favs, 'utf8', (err, data) => {
+        if(err) console.error(err)
+        else console.log(data)
+    })
+}
+
 
 function consoleShow(book) {
     let testament = 'the old testament'
