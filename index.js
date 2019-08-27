@@ -29,7 +29,17 @@ function getRequested(search, books, res) {
     if(chap) sendChapter(chap, res)
     else {
         let r = main.findResults(books, search)
-        res.write(`<!doctype html>
+        if(r && r.length) sendResults(r, res, search)
+        else {
+            let bks = main.findMatchingBooks(books, search)
+            if(bks && bks.length) sendMatchingBooks(bks, res, search)
+            else sendNoResults(res, search)
+        }
+    }
+}
+
+function sendResults(r, res, search) {
+    res.write(`<!doctype html>
 <html>
 <head>
     <meta charset="utf-8">
@@ -37,35 +47,77 @@ function getRequested(search, books, res) {
 </head>
 <body>`)
 
-        res.write(`<h2>Search Results for: '${search}'</h2>`)
-        if(!r || !r.length) {
-            res.write('(No Results found)')
-        } else {
-            res.write('<ul>')
-            for(let i = 0;i < r.length;i++) {
-                let book = r[i]
-                res.write(`<li>${main.chapterId(book)} ${book.title}`)
-                res.write(`<pre>`)
-                for(let i = 0;i < book.result.length;i++) {
-                    res.write('<p>')
-                    res.write(book.result[i])
-                    res.write('</p>')
-                }
-                res.write(`</pre></li>`)
-                res.write(`</li>`)
-            }
+    res.write(`<h2>Search Results for: '${search}'</h2>`)
+    res.write('<ul>')
+    for(let i = 0;i < r.length;i++) {
+        let book = r[i]
+        res.write(`<li>${main.chapterId(book)} ${book.title}`)
+        res.write(`<pre>`)
+        for(let i = 0;i < book.result.length;i++) {
+            res.write('<p>')
+            res.write(book.result[i])
+            res.write('</p>')
         }
+        res.write(`</pre></li>`)
+        res.write(`</li>`)
+    }
 
-        res.write(`<form method=get action=/g>
+    res.write(`<form method=get action=/g>
     <input name="s"></input><button type=submit value=submit>Submit</button>
 </form>`)
 
-        res.write(`</body>
+    res.write(`</body>
 </html>`)
 
-        res.end()
+    res.end()
+}
 
+function sendMatchingBooks(r, res, search) {
+    res.write(`<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>The Bible: Search Results</title>
+</head>
+<body>`)
+
+    res.write(`<h2>Multiple books match: '${search}'</h2>`)
+    res.write(`<ul>`)
+    for(let i = 0;i < r.length;i++) {
+        res.write(`<li>${r[i].book.title}</li>`)
     }
+    res.write(`</ul>`)
+
+    res.write(`<form method=get action=/g>
+    <input name="s"></input><button type=submit value=submit>Submit</button>
+</form>`)
+
+    res.write(`</body>
+</html>`)
+
+    res.end()
+}
+
+function sendNoResults(res, search) {
+    res.write(`<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>The Bible: Search Results</title>
+</head>
+<body>`)
+
+    res.write(`<h2>Search Results for: '${search}'</h2>`)
+    res.write(`<p>(No results found)</p>`)
+
+    res.write(`<form method=get action=/g>
+    <input name="s"></input><button type=submit value=submit>Submit</button>
+</form>`)
+
+    res.write(`</body>
+</html>`)
+
+    res.end()
 }
 
 function sendChapter(book, res) {

@@ -18,9 +18,16 @@ function loadChapter(books, chapId) {
     let m = chapId.match(/^([on])([0-9]+)[:| \t,^*#]([0-9]+)/)
     if(m) return chapter_num_1(m[1], m[2], m[3])
 
-    m = chapId.match(/^([A-z]*)[:| \t^*#]([0-9]+)/)
-    if(m) return chapter_1(m[1], m[2])
-
+    let bks = findMatchingBooks(books, chapId)
+    if(bks && bks.length == 1) {
+        let book = bks[0].book
+        for(let i = 0;i < book.chapters.length;i++) {
+            let chapter = book.chapters[i]
+            if(chapter.txt[0].startsWith(`${bks[0].chapnum}:`)) {
+                return serveChapter(book, chapter)
+            }
+        }
+    }
 
     function chapter_num_1(testament, bknum, chapnum) {
         if(testament == 'o') testament = 'old'
@@ -38,6 +45,12 @@ function loadChapter(books, chapId) {
         }
     }
 
+}
+
+function findMatchingBooks(books, chapId) {
+    let m = chapId.match(/^([A-z ]*)[:| \t^*#]([0-9]+)/)
+    if(m) return chapter_1(m[1], m[2])
+
     function chapter_1(bk, chapnum) {
         let bks = []
         bk = bk.split(' ').map(w => w.toLowerCase())
@@ -48,17 +61,9 @@ function loadChapter(books, chapId) {
             for(let i = 0;i < bk.length;i++) {
                 if(title.search(bk[i]) == -1) found = false
             }
-            if(found) bks.push(book)
+            if(found) bks.push({ book: book, chapnum: chapnum })
         }
-        if(bks.length == 1) {
-            let book = bks[0]
-            for(let i = 0;i < book.chapters.length;i++) {
-                let chapter = book.chapters[i]
-                if(chapter.txt[0].startsWith(`${chapnum}:`)) {
-                    return serveChapter(book, chapter)
-                }
-            }
-        }
+        return bks
     }
 }
 
@@ -251,4 +256,5 @@ module.exports = {
     loadChapter: loadChapter,
     chapterId: chapterId,
     findResults: findResults,
+    findMatchingBooks: findMatchingBooks,
 }

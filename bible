@@ -70,7 +70,13 @@ function omniSearch(books, search) {
         recordShown(chap)
     } else {
         let results = main.findResults(books, search)
-        consoleShowResults(results)
+        if(results && results.length) {
+            consoleShowResults(results)
+        } else {
+            let bks = main.findMatchingBooks(books, search)
+            if(bks && bks.length) consoleShowBooks(bks)
+            else console.error(`(no results found)`)
+        }
     }
 }
 
@@ -118,11 +124,17 @@ function consoleShow(book) {
 }
 
 function consoleShowResults(verses) {
-    if(!verses || !verses.length) return console.error(`(no results found)`)
     for(let i = 0;i < verses.length;i++) {
         let book = verses[i]
         console.log(book.result.join('\n'))
         console.log(main.chapterId(book))
+    }
+}
+
+function consoleShowBooks(results) {
+    console.log('Too many matching books found:')
+    for(let i = 0;i < results.length;i++) {
+        console.log(`\t${results[i].book.title}`)
     }
 }
 
