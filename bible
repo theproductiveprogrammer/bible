@@ -44,7 +44,7 @@ function showBooks(books) {
     console.log('\t=================')
     for(let i = 0;i < books.length;i++) {
         if(books[i].testament == 'old') {
-            console.log(`${books[i].title.replace(/\n/g,' ')}`)
+            console.log(`o${to_str_1(books[i])}`)
         }
     }
 
@@ -54,8 +54,12 @@ function showBooks(books) {
     console.log('\t=================')
     for(let i = 0;i < books.length;i++) {
         if(books[i].testament == 'new') {
-            console.log(`${books[i].title}`)
+            console.log(`n${to_str_1(books[i])}`)
         }
+    }
+
+    function to_str_1(book) {
+        return `${book.num}\t${book.title.replace(/\n/g, ' ')}`
     }
 }
 
