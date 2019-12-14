@@ -12,7 +12,7 @@ function cmdline(books) {
         let args = process.argv.slice(2).join(' ')
         if(args == '-h' || args == '--help') showHelp()
         else if (args == '-b' || args == '--books') showBooks(books)
-        else if (args == '-f' || args == '--fav') showFavs()
+        else if (args == '-f' || args == '--fav') showFavs(books)
         else if (args == '--save') saveFav()
         else {
             omniSearch(books, args)
@@ -141,11 +141,21 @@ function loadMetaFileLines(fname, cb) {
     })
 }
 
-function showFavs() {
-    fs.readFile(favs, 'utf8', (err, data) => {
+function showFavs(books) {
+    loadMetaFileLines(favs, (err, lines) => {
         if(err) console.error(err)
-        else console.log(data)
+        else {
+            for(let i = 0;i < lines.length;i++) {
+                console.log(with_title_1(lines[i]))
+            }
+        }
     })
+
+    function with_title_1(line) {
+      let chap = main.loadChapter(books, line)
+      if(chap) return `${line}\t${chap.title} (Chapter ${chap.chapter.num})`
+      else return line
+    }
 }
 
 
