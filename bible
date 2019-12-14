@@ -92,15 +92,47 @@ function recordShown(book) {
 
 const favs = path.join(__dirname, "favs")
 function saveFav() {
-    fs.readFile(shown, 'utf8', (err, data) => {
+    loadMetaFileLines(shown, (err, lines) => {
         if(err) console.error(err)
         else {
-            let lines = data.split(/\n/).filter(l => l.trim().length > 0)
             let last = lines[lines.length-1]
-            fs.appendFile(favs, `${last}\n`, (err) => {
+            loadMetaFileLines(favs, (err, lines) => {
                 if(err) console.error(err)
-                else console.log(`Saving ${last} as favorite`)
+                else {
+                    if(is_already_saved_1(last, lines)) {
+                        already_saved_1(last)
+                    } else {
+                        append_to_favs_1(last)
+                    }
+                }
             })
+        }
+    })
+
+    function is_already_saved_1(last, lines) {
+        return lines.indexOf(last) != -1
+    }
+
+    function append_to_favs_1(last) {
+        fs.appendFile(favs, `${last}\n`, (err) => {
+            if(err) console.error(err)
+            else console.log(`Saving ${last} as favorite`)
+        })
+    }
+
+    function already_saved_1(last) {
+        console.log(`${last} already saved as favorite`)
+    }
+}
+
+function loadMetaFileLines(fname, cb) {
+    fs.readFile(fname, 'utf8', (err, data) => {
+        if(err) cb(err)
+        else {
+            let lines = data.split(/\n/)
+            lines = lines.map(l => l.trim())
+            lines = lines.filter(l => l.length > 0)
+            cb(null, lines)
         }
     })
 }
