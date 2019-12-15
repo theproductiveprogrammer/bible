@@ -1,7 +1,7 @@
 {
   "name": "bible",
   "version": "2.0.0",
-  "description": "The Bible Explorer",
+  "description": "A Bible",
   "main": "index.js",
   "author": "charles.lobo@gmail.com",
   "license": "ISC",
