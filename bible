@@ -5,7 +5,12 @@ const fs = require('fs')
 
 const main = require('./main')
 
-function cmdline(books) {
+function cmdline(err, books) {
+    if(err) {
+        console.error(err)
+        return
+    }
+
     if(process.argv.length < 3) {
         show_random_chapter_1(books)
     } else {
@@ -96,11 +101,11 @@ function recordShown(book) {
 
 const favs = path.join(__dirname, "favs")
 function saveFav() {
-    loadMetaFileLines(shown, (err, lines) => {
+    main.loadMetaFileLines(shown, (err, lines) => {
         if(err) console.error(err)
         else {
             let last = lines[lines.length-1]
-            loadMetaFileLines(favs, (err, lines) => {
+            main.loadMetaFileLines(favs, (err, lines) => {
                 if(err) console.error(err)
                 else {
                     if(is_already_saved_1(last, lines)) {
@@ -129,20 +134,8 @@ function saveFav() {
     }
 }
 
-function loadMetaFileLines(fname, cb) {
-    fs.readFile(fname, 'utf8', (err, data) => {
-        if(err) cb(err)
-        else {
-            let lines = data.split(/\n/)
-            lines = lines.map(l => l.trim())
-            lines = lines.filter(l => l.length > 0)
-            cb(null, lines)
-        }
-    })
-}
-
 function showFavs(books) {
-    loadMetaFileLines(favs, (err, lines) => {
+    main.loadMetaFileLines(favs, (err, lines) => {
         if(err) console.error(err)
         else {
             for(let i = 0;i < lines.length;i++) {

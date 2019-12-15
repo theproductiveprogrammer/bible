@@ -3,10 +3,7 @@ const fs = require('fs')
 const path = require('path')
 
 function serve(fn) {
-    load(path.join(__dirname,'kjv.txt'), (err, books) => {
-        if(err) console.error(err)
-        else fn(books)
-    })
+    load(path.join(__dirname,'kjv.txt'), fn)
 }
 
 function randomChapter(books) {
@@ -250,6 +247,19 @@ function load(name, cb) {
     }
 }
 
+function loadMetaFileLines(fname, cb) {
+    fs.readFile(fname, 'utf8', (err, data) => {
+        if(err) cb(err)
+        else {
+            let lines = data.split(/\n/)
+            lines = lines.map(l => l.trim())
+            lines = lines.filter(l => l.length > 0)
+            cb(null, lines)
+        }
+    })
+}
+
+
 module.exports = {
     serve: serve,
     randomChapter: randomChapter,
@@ -257,4 +267,5 @@ module.exports = {
     chapterId: chapterId,
     findResults: findResults,
     findMatchingBooks: findMatchingBooks,
+    loadMetaFileLines: loadMetaFileLines,
 }

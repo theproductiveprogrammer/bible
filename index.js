@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 'use strict'
+const path = require('path')
+
 const express = require('express')
 
 const main = require('./main')
@@ -8,25 +10,58 @@ const app = express()
 
 const PORT = 1923
 
-function httpserver(books) {
-    app.get('/g', (req, res) => {
-        getRequested(req.query.s, books, res)
-    })
+function httpserver(err, books) {
+    if(err) {
+        console.error(err)
+        return
+    }
 
-    app.get('/', (req, res) => {
-        sendChapter(main.randomChapter(books), res)
-    })
-
-    app.listen(PORT, (err) => {
+    const favs = path.join(__dirname, "favs")
+    main.loadMetaFileLines(favs, (err, lines) => {
         if(err) console.error(err)
-        else console.log(`Started on port ${PORT}...`)
+        else start_server_1(books, load_favs_1(lines))
     })
+
+
+    function start_server_1(books, favs) {
+        app.get('/g', (req, res) => {
+            getRequested(req.query.s, books, favs, res)
+        })
+
+        app.get('/', (req, res) => {
+            sendChapter(main.randomChapter(books), favs, res)
+        })
+
+        app.listen(PORT, (err) => {
+            if(err) console.error(err)
+            else console.log(`Started on port ${PORT}...`)
+        })
+    }
+
+    function load_favs_1(lines) {
+        return lines.map(l => {
+            let chap = main.loadChapter(books, l)
+            if(chap) {
+                return {
+                    id: l,
+                    chap: {
+                      title: chap.title,
+                      num: chap.chapter.num,
+                    }
+                }
+            } else {
+                return {
+                    id: l
+                }
+            }
+        })
+    }
 
 }
 
-function getRequested(search, books, res) {
+function getRequested(search, books, favs, res) {
     let chap = main.loadChapter(books, search)
-    if(chap) sendChapter(chap, res)
+    if(chap) sendChapter(chap, favs, res)
     else {
         let r = main.findResults(books, search)
         if(r && r.length) sendResults(r, res, search)
@@ -120,7 +155,7 @@ function sendNoResults(res, search) {
     res.end()
 }
 
-function sendChapter(book, res) {
+function sendChapter(book, favs, res) {
     res.header('Content-Type', 'text/html')
 
     let testament = 'the old testament'
@@ -147,6 +182,17 @@ function sendChapter(book, res) {
     res.write(`<form method=get action=/g>
     <input name="s"></input><button type=submit value=submit>Submit</button>
 </form>`)
+
+    res.write(`<hr/><p><b>Favorites</b><ul>`)
+    for(let i = 0;i < favs.length;i++) {
+        let fav = favs[i]
+        if(fav.chap) {
+            res.write(`<li><a href="g?s=${fav.id}">${fav.chap.title} (Chapter ${fav.chap.num})</a></li>`)
+        } else {
+            res.write(`<li><a href="g?s=${fav.id}">[${fav.id}]</a></li>`)
+        }
+    }
+    res.write(`</ul></p><hr/>`)
 
     res.write(`</body>
 </html>`)
